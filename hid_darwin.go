@@ -2,7 +2,7 @@ package hid
 
 /*
 #cgo CFLAGS: -fconstant-cfstrings
-#cgo LDFLAGS: -L . -L/usr/local/lib -framework CoreFoundation -framework IOKit 
+#cgo LDFLAGS: -L . -L/usr/local/lib -framework CoreFoundation -framework IOKit
 #include <IOKit/hid/IOHIDManager.h>
 #include <CoreFoundation/CoreFoundation.h>
 
@@ -159,7 +159,7 @@ type osxDevice struct {
 
 func cfstring(s string) C.CFStringRef {
 	n := C.CFIndex(len(s))
-	return C.CFStringCreateWithBytes(nil, *(**C.UInt8)(unsafe.Pointer(&s)), n, C.kCFStringEncodingUTF8, 0)
+	return C.CFStringCreateWithBytes(C.kCFAllocatorDefault, *(**C.UInt8)(unsafe.Pointer(&s)), n, C.kCFStringEncodingUTF8, 0)
 }
 
 func gostring(cfs C.CFStringRef) string {
@@ -213,12 +213,12 @@ func getPath(osDev C.IOHIDDeviceRef) string {
 
 func iterateDevices(action func(device C.IOHIDDeviceRef) bool) cleanupDeviceManagerFn {
 	mgr := C.IOHIDManagerCreate(C.kCFAllocatorDefault, C.kIOHIDOptionsTypeNone)
-	C.IOHIDManagerSetDeviceMatching(mgr, nil)
+	C.IOHIDManagerSetDeviceMatching(mgr, 0)
 	C.IOHIDManagerOpen(mgr, C.kIOHIDOptionsTypeNone)
 
 	allDevicesSet := C.IOHIDManagerCopyDevices(mgr)
 	// Temporarily disabled
-    //defer C.CFRelease(C.CFTypeRef(allDevicesSet))
+	//defer C.CFRelease(C.CFTypeRef(allDevicesSet))
 	devCnt := C.CFSetGetCount(allDevicesSet)
 	allDevices := make([]unsafe.Pointer, uint64(devCnt))
 	C.CFSetGetValues(allDevicesSet, &allDevices[0])
@@ -231,7 +231,7 @@ func iterateDevices(action func(device C.IOHIDDeviceRef) bool) cleanupDeviceMana
 	return func() {
 		C.IOHIDManagerClose(mgr, C.kIOHIDOptionsTypeNone)
 		// Temporarily disabled
-        //C.CFRelease(C.CFTypeRef(mgr))
+		//C.CFRelease(C.CFTypeRef(mgr))
 	}
 }
 
